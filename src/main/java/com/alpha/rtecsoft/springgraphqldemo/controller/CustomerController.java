@@ -16,6 +16,9 @@ import reactor.core.publisher.Sinks;
 import java.time.Duration;
 import java.util.stream.Stream;
 
+import static graphql.com.google.common.base.Preconditions.checkArgument;
+import static graphql.com.google.common.base.Preconditions.checkNotNull;
+
 @RestController
 public class CustomerController {
     private final CustomerRepository customerRepository;
@@ -32,11 +35,14 @@ public class CustomerController {
 
     @MutationMapping
     public Mono<Customer> addCustomer(@Argument String name) {
+        checkNotNull(name, "name cannot be null");
+        checkArgument(name.length() > 0, "name cannot be empty");
         return this.customerRepository.save(new Customer(null, name));
     }
 
     @SubscriptionMapping
     Flux<CustomerEvent> customerEvents(@Argument Integer id) {
+        checkArgument(id > 0, "negative id");
         return this.customerRepository.findById(id)
                 .flatMapMany(customer -> {
                     var stream = Stream.generate(() -> new CustomerEvent(customer, CustomerEventType.CREATED));
